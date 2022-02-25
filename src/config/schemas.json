@@ -1,0 +1,41 @@
+[{
+    "schema_name": "ontario-digital-lab-test-credential",
+    "schema_version": "0.1.0",
+    "attributes": [
+      "name",
+      "civic_address",
+      "city",
+      "province",
+      "country",
+      "postal_code",
+      "birth_dateint",
+      "photo",
+      "issue_date"
+    ],
+    "tag": "ontario-digital-lab-test-credential",
+    "revocable": false,
+    "public": true,
+    "default": true
+  },
+  {
+    "schema_name": "ministry-of-health-test-credential",
+    "schema_version": "0.1.0",
+    "attributes": [
+      "types",
+      "person_name_family",
+      "person_name_given",
+      "person_birthDate",
+      "person_identifier_assigner",
+      "person_identifier_value",
+      "person_identifier_type",
+      "card_validity_period_start",
+      "card_validity_period_end",
+      "card_type",
+      "card_version"
+    ],
+    "tag": "ministry-of-health-test-credential",
+    "revocable": false,
+    "public": true,
+    "default": false
+  }
+]

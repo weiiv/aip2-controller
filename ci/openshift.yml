@@ -1,0 +1,138 @@
+kind: Template
+apiVersion: template.openshift.io/v1
+metadata:
+  name: aip2-controller
+  annotations:
+    description: aip2 controller
+    tags: experimentation, aries, issuer, verifier
+objects:
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: aip2-controller
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    labels:
+      app: aip2-controller
+    name: aip2-controller
+  spec:
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'aip2-controller:latest'
+    resources: {}
+    successfulBuildsHistoryLimit: 5
+    failedBuildsHistoryLimit: 5
+    strategy:
+      type: Docker
+      dockerStrategy:
+        dockerfilePath: ci/Dockerfile.Build
+    postCommit: {}
+    source:
+      contextDir: .
+      type: Git
+      git:
+        uri: 'https://github.com/weiiv/dilab-aip2controller.git'
+    triggers:
+      - type: ConfigChange
+    runPolicy: Serial
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: aip2-controller
+    labels:
+      app: aip2-controller
+      app.kubernetes.io/part-of: DI-LAB
+  spec:
+    strategy:
+      type: Recreate
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - aip2-controller
+          from:
+            kind: ImageStreamTag
+            name: 'aip2-controller:latest'
+    replicas: 1
+    revisionHistoryLimit: 10
+    test: false
+    selector:
+      app: aip2-controller
+    template:
+      metadata:
+        labels:
+          app: aip2-controller
+      spec:
+        containers:
+          - name: aip2-controller
+            env:
+              - name: PG_CONNSSL
+                value: "true"
+              - name: PG_POOLMIN
+                value: "5"
+              - name: PG_POOLMAX
+                value: "200"
+              - name: PG_POOLIDLE
+                value: "60000"
+              - name: PG_CONNSTR
+                valueFrom:
+                  secretKeyRef:
+                    name: aip1controller
+                    key: PG_CONNSTR
+              - name: AGENT_ADMIN_APIKEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aip1controller
+                    key: AGENT_ADMIN_APIKEY
+              - name: CONTROLLER_APIKEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aip1controller
+                    key: CONTROLLER_APIKEY
+              - name: AGENT_ADMIN_URL
+                value: http://acapy-agent1:3000
+              - name: FRONTEND_NOTIFY_URL
+                value: http://frontend:8080/api/notify/credential
+            image: " "
+            ports:
+              - containerPort: 3000
+                protocol: TCP
+            resources: {}
+            imagePullPolicy: Always
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        dnsPolicy: ClusterFirst
+        securityContext: {}
+        schedulerName: default-scheduler
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: aip2-controller
+  spec:
+    selector:
+      app: aip2-controller
+    ports:
+      - name: '3000'
+        protocol: TCP
+        port: 3000
+        targetPort: 3000
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: aip2-controller
+  spec:
+    host: aip2-controller.apps.ocp2.az.uat.aro.gocloud.gov.on.ca
+    to:
+      kind: Service
+      name: aip2-controller
+      weight: 100
+    tls:
+      termination: edge
+    port:
+      targetPort: 3000
+    wildcardPolicy: None

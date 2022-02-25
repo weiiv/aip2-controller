@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  dilab-aip1controller:
+    build:
+      context: ../
+      dockerfile: ./ci/Dockerfile.Build
+    image: dilab-aip1controller:latest
+    container_name: dilab-aip1controller
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    restart: unless-stopped
